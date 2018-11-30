@@ -43,27 +43,30 @@ def dec(key, cipher_text_fp, result_text):
 def gen_random_key(n):
    k = []
    for i in range(n):
-       k.append(choice(['0', "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F",]))
+       k.append(choice(['0', "1"]))
    return k
 
 
 #Keygen function for command line use
-def keygen(new_key_text):
+def keygen(file1, file2):
    length = 16
-   key = gen_random_key(length)
-   print(key)
+   key1 = gen_random_key(length)
+   key2 = gen_random_key(length)
+   print(key1 key2)
 
-   key_text = open(new_key_text, "w")
-   key_text.write(''.join(key))
-   key_text.close()
+   key_text1 = open(file1, "w")
+   key_text1.write(''.join(key1))
+   key_text1.close()
 
-
+   key_text2 = open(file2, "w")
+   key_text2.write(''.join(key2))
+   key_text2.close()
 
 #Get IV
 def get_initialization_vector():
    k = []
    for i in range(16):
-       k.append(hex(ord(choice(['0', "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F",]).encode())))
+       k.append(ord(choice(['0', "1"])))
    return k
 
 
@@ -86,7 +89,7 @@ def input_check():
     elif input[1] == 'dec':
         dec(input[2], input[3], input[4])
     elif input[1] == 'keygen':
-        keygen(input[2])
+        keygen(input[2], input[3])
 
 #Main function, contains workflow
 def main():
