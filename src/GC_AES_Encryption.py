@@ -91,11 +91,17 @@ def dec(key, cipher_text_fp, result_text):
 # generates a new key of length length and outputs it to file new_key_text
 def keygen(prf_key_file_name, aes_key_file_name):
     length = 256
-    key = gen_random_key(length)
-    print(''.join(key))
+    keyPRF = gen_random_key(length)
+    keyAES = gen_random_key(length)
+    print('PRF Key:' + ''.join(keyPRF))
+    print('AES Key: ' + ''.join(keyAES))
 
-    key_text = open(new_key_text, "w")
-    key_text.write(''.join(key))
-    key_text.close()
+    key_text_PRF = open(prf_key_file_name, "w")
+    key_text_PRF.write(''.join(keyPRF))
+    key_text_PRF.close()
+
+    key_text_AES = open(aes_key_file_name, "w")
+    key_text_AES.write(''.join(keyAES))
+    key_text_AES.close()
 
 main()
