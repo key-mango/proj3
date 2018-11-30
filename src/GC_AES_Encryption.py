@@ -58,17 +58,38 @@ def enc(key_PRF_filepath, key_AES_filepath, index_filepath, files_folderpath, ci
     key_PRF_file_text = open(key_PRF_filepath, "r").read()
     key_AES_file_text = open(key_AES_filepath, "r").read()
 
+    unique_keyword_set = set()
     for filename, keywords_array in filenames_with_keywords_dictionary.items():
-        print(encrypt_string_with_PRF(filename, key_PRF_file_text))
+        for word in keywords_array:
+            unique_keyword_set.add(word)
+
+    #print(encrypt_string_with_PRF(filename, key_PRF_file_text))
+    print(unique_keyword_set)
+
+    unencrypted_inverted_index_dictionary = {}
+    for keyword in unique_keyword_set:
+        files_with_this_keyword_set = set()
+        for filename, keywords_array in filenames_with_keywords_dictionary.items():
+            for word in keywords_array:
+                if(word == keyword):
+                    files_with_this_keyword_set.add(filename)
+        unencrypted_inverted_index_dictionary[keyword] = files_with_this_keyword_set
+    
+    print(unencrypted_inverted_index_dictionary)
+    
+    encrypted_unique_keyword_set = set()
+    for keyword in unique_keyword_set:
+        encrypted_unique_keyword_set.add(encrypt_string_with_PRF(keyword, key_PRF_file_text))
+
+    print(encrypted_unique_keyword_set)
     
     # open both key and plain_text files
-    key_text  = open(key_fp, "r")
-    plain_text  = open(plain_text_fp, "r").read()
+    key_text  = open(key_PRF_filepath, "r")
 
     # create new aes encryption method using given key and iv
     aes = AES.new(key_text.read().encode("utf8"), AES.MODE_CBC, iv)
     # encrypt plain_text using newly created aes encryptor, note that plain_text must first be converted to bytes
-    cipher_text = aes.encrypt(plain_text.encode("utf8"))
+    cipher_text = aes.encrypt("hat".encode("utf8"))
     # again, write to file after converting to hex
     write_cipher_text_to_file(cipher_text_fp, cipher_text.hex())
 
@@ -83,8 +104,15 @@ def get_keywords_from_file(keywords_filepath):
     return keywords_array
 
 def encrypt_string_with_PRF(string_to_encrypt, key_text_to_encrypt_with):
-    aes = AES.new(key_text_to_encrypt_with, AES.MODE_ECB)
-    encrypted_string = aes.encrypt(string_to_encrypt)
+    l = len(string_to_encrypt)
+
+    while(l%16 != 0):
+        string_to_encrypt = string_to_encrypt + "0"
+        l = len(string_to_encrypt)
+
+    aes = AES.new(key_text_to_encrypt_with.encode("utf8"), AES.MODE_ECB)
+    encrypted_string = aes.encrypt(string_to_encrypt.encode("utf8"))
+
     return encrypted_string
 
 # Handles decoding of text cipher_text given a key key and output file result_text
