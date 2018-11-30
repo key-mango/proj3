@@ -82,6 +82,16 @@ def enc(key_PRF_filepath, key_AES_filepath, index_filepath, files_folderpath, ci
         encrypted_unique_keyword_set.add(encrypt_string_with_PRF(keyword, key_PRF_file_text))
 
     print(encrypted_unique_keyword_set)
+
+    count = 1
+    for filename, keywords_array in filenames_with_keywords_dictionary.items():
+        if int(filename[1]) == count:
+            cipher_text = open(ciphertextfiles_folderpath + "/" + "c" +str(count) + ".txt", "w")
+            for keyword in keywords_array:
+                cipher_text.write(encrypt_string_with_PRF(keyword, key_PRF_file_text))
+                print(cipher_text.read())
+                cipher_text.close()
+        count = count + 1
     
     # open both key and plain_text files
     key_text  = open(key_PRF_filepath, "r")
