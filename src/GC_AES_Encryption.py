@@ -9,7 +9,7 @@ from Crypto import Random
 def gen_random_key(n):
     k = []
     for i in range(n):
-        k.append(choice(['0', "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]))
+        k.append(choice(['0', '1']))
     return k
 
 # Simply writes some text to the given file/file path
@@ -39,7 +39,7 @@ def main():
     elif input[1] == "dec":
         dec(input[2], input[3], input[4])
     elif input[1] == "keygen":
-        keygen(input[2])
+        keygen(input[2], input[3])
     else:
         print("Invalid command: Use enc, dec, or keygen")
 
@@ -89,8 +89,8 @@ def dec(key, cipher_text_fp, result_text):
     print(plain_text.decode())
 
 # generates a new key of length length and outputs it to file new_key_text
-def keygen(new_key_text):
-    length = 16
+def keygen(prf_key_file_name, aes_key_file_name):
+    length = 256
     key = gen_random_key(length)
     print(''.join(key))
 
