@@ -1,6 +1,7 @@
 from random import choice
 import string
 import sys
+import os
 from Crypto.Cipher import AES
 from Crypto import Random
 
@@ -35,7 +36,7 @@ def main():
 
     # depending on the arguments we'll need to enc, dec or generate a keygen accordingly
     if input[1] == "enc":
-        enc(input[2], input[3], input[4])
+        enc(input[2], input[3], input[4], input[5], input[6])
     elif input[1] == "dec":
         dec(input[2], input[3], input[4])
     elif input[1] == "keygen":
@@ -44,7 +45,10 @@ def main():
         print("Invalid command: Use enc, dec, or keygen")
 
 # Handles encoding of text plain_text given a key key and output file cipher_text
-def enc(key_fp, plain_text_fp, cipher_text_fp):
+def enc(key_PRF_filepath, key_AES_filepath, index_filepath, files_folderpath, ciphertextfiles_folderpath):
+    for filename in os.listdir(files_folderpath):
+        if filename.endswith(".txt"):
+            print("we did it?")
     # open both key and plain_text files
     key_text  = open(key_fp, "r")
     plain_text  = open(plain_text_fp, "r").read()
