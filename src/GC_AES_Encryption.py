@@ -46,25 +46,24 @@ def main():
 
 # Handles encoding of text plain_text given a key key and output file cipher_text
 def enc(key_PRF_filepath, key_AES_filepath, index_filepath, files_folderpath, ciphertextfiles_folderpath):
+    filenames_with_keywords_dictionary = {}
+    
     for filename in os.listdir(files_folderpath):
         if filename.endswith(".txt"):
-            print("we did it?")
+            keywords_array = get_keywords_from_file(files_folderpath + "/" + filename)
+            filenames_with_keywords_dictionary[filename] = keywords_array
+    
+    print(filenames_with_keywords_dictionary)
+
+    key_PRF_file_text = open(key_PRF_filepath, "r").read()
+    key_AES_file_text = open(key_AES_filepath, "r").read()
+
+    for filename, keywords_array in filenames_with_keywords_dictionary.items():
+        print(encrypt_string_with_PRF(filename, key_PRF_file_text))
+    
     # open both key and plain_text files
     key_text  = open(key_fp, "r")
     plain_text  = open(plain_text_fp, "r").read()
-
-    # if the length isn't 16, just add some spaces at the end until it is
-    while(len(plain_text) % 16 != 0): 
-        plain_text = plain_text + " "
-
-    # Generate an instantiation vector
-    iv = Random.new().read(AES.block_size)
-
-    # Write iv to file
-    iv_text = open("data/iv.txt", "w")
-    # First convert the iv to hex so its humanly readable
-    iv_text.write(''.join(iv.hex()))
-    iv_text.close()
 
     # create new aes encryption method using given key and iv
     aes = AES.new(key_text.read().encode("utf8"), AES.MODE_CBC, iv)
@@ -74,6 +73,19 @@ def enc(key_PRF_filepath, key_AES_filepath, index_filepath, files_folderpath, ci
     write_cipher_text_to_file(cipher_text_fp, cipher_text.hex())
 
     print(cipher_text.hex())
+
+def get_keywords_from_file(keywords_filepath):
+    keywords_array = []
+    keywords_text = open(keywords_filepath).read()
+    for word in keywords_text.split():
+        keywords_array.append(word)
+
+    return keywords_array
+
+def encrypt_string_with_PRF(string_to_encrypt, key_text_to_encrypt_with):
+    aes = AES.new(key_text_to_encrypt_with, AES.MODE_ECB)
+    encrypted_string = aes.encrypt(string_to_encrypt)
+    return encrypted_string
 
 # Handles decoding of text cipher_text given a key key and output file result_text
 def dec(key, cipher_text_fp, result_text):
@@ -94,7 +106,7 @@ def dec(key, cipher_text_fp, result_text):
 
 # generates a new key of length length and outputs it to file new_key_text
 def keygen(prf_key_file_name, aes_key_file_name):
-    length = 256
+    length = 32
     keyPRF = gen_random_key(length)
     keyAES = gen_random_key(length)
     print('PRF Key:' + ''.join(keyPRF))
