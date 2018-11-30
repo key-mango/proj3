@@ -88,9 +88,9 @@ def enc(key_PRF_filepath, key_AES_filepath, index_filepath, files_folderpath, ci
         if int(filename[1]) == count:
             cipher_text = open(ciphertextfiles_folderpath + "/" + "c" +str(count) + ".txt", "w")
             for keyword in keywords_array:
-                cipher_text.write(encrypt_string_with_PRF(keyword, key_PRF_file_text))
-                print(cipher_text.read())
-                cipher_text.close()
+                cipher_text.write(encrypt_string_with_PRF(keyword, key_PRF_file_text).hex())
+                cipher_text.write(" ")
+            cipher_text.close()
         count = count + 1
     
     # open both key and plain_text files
@@ -120,8 +120,8 @@ def encrypt_string_with_PRF(string_to_encrypt, key_text_to_encrypt_with):
         string_to_encrypt = string_to_encrypt + "0"
         l = len(string_to_encrypt)
 
-    aes = AES.new(key_text_to_encrypt_with.encode("utf8"), AES.MODE_ECB)
-    encrypted_string = aes.encrypt(string_to_encrypt.encode("utf8"))
+    aes = AES.new(key_text_to_encrypt_with.encode("utf-8"), AES.MODE_ECB)
+    encrypted_string = aes.encrypt(string_to_encrypt.encode("utf-8"))
 
     return encrypted_string
 
