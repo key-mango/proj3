@@ -109,6 +109,13 @@ def enc(key_PRF_filepath, key_AES_filepath, index_filepath, files_folderpath, ci
             ciphertext_files_containing_keyword_array.append(cipher_text_filename)
         encrypted_unique_keyword = encrypt_string_with_PRF(keyword, key_PRF_file_text).hex()
         encrypted_inverted_index_dictionary[encrypted_unique_keyword] = ciphertext_files_containing_keyword_array
+    
+    index_text = open(index_filepath, "w")
+    for encrypted_keyword, filenames in encrypted_inverted_index_dictionary.items():
+        index_text.write(encrypted_keyword + " ")
+        for filename in filenames:
+            index_text.write(filename + " ")
+        index_text.write("\n")
 
     print(encrypted_inverted_index_dictionary)
     
