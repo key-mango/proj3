@@ -41,13 +41,21 @@ def main():
         dec(input[2], input[3], input[4])
     elif input[1] == "keygen":
         keygen(input[2], input[3])
+    elif input[1] == "token":
+        generate_token(input[2], input[3], input[4])
     else:
         print("Invalid command: Use enc, dec, or keygen")
+
+def generate_token(keyword, key_PRF_filepath, token_filepath):
+    key_PRF_file_text = open(key_PRF_filepath, "r").read()
+    token_file = open(token_filepath, "w")
+    token_file.write(encrypt_string_with_PRF(keyword, key_PRF_file_text).hex())
 
 # Handles encoding of text plain_text given a key key and output file cipher_text
 def enc(key_PRF_filepath, key_AES_filepath, index_filepath, files_folderpath, ciphertextfiles_folderpath):
     filenames_with_keywords_dictionary = {}
     
+    # Get file names and keyword arrays, insert into dictionary
     for filename in os.listdir(files_folderpath):
         if filename.endswith(".txt"):
             keywords_array = get_keywords_from_file(files_folderpath + "/" + filename)
@@ -76,22 +84,33 @@ def enc(key_PRF_filepath, key_AES_filepath, index_filepath, files_folderpath, ci
         unencrypted_inverted_index_dictionary[keyword] = files_with_this_keyword_set
     
     print(unencrypted_inverted_index_dictionary)
-    
-    encrypted_unique_keyword_set = set()
+
+    # count = 1
+    # for filename, keywords_array in filenames_with_keywords_dictionary.items():
+    #     if int(filename[1]) == count:
+    #         cipher_text = open(ciphertextfiles_folderpath + "/" + "c" + str(count) + ".txt", "w")
+    #         for keyword in keywords_array:
+    #             cipher_text.write(encrypt_string_with_PRF(keyword, key_PRF_file_text).hex())
+    #             cipher_text.write(" ")
+    #         cipher_text.close()
+    #     count = count + 1
+
+    encrypted_inverted_index_dictionary = {}
     for keyword in unique_keyword_set:
-        encrypted_unique_keyword_set.add(encrypt_string_with_PRF(keyword, key_PRF_file_text))
-
-    print(encrypted_unique_keyword_set)
-
-    count = 1
-    for filename, keywords_array in filenames_with_keywords_dictionary.items():
-        if int(filename[1]) == count:
-            cipher_text = open(ciphertextfiles_folderpath + "/" + "c" +str(count) + ".txt", "w")
-            for keyword in keywords_array:
-                cipher_text.write(encrypt_string_with_PRF(keyword, key_PRF_file_text).hex())
+        files_containing_keyword_array = unencrypted_inverted_index_dictionary[keyword]
+        ciphertext_files_containing_keyword_array = []
+        for filename in files_containing_keyword_array:
+            cipher_text_filename = filename.replace("f", "c")
+            cipher_text = open(ciphertextfiles_folderpath + "/" + cipher_text_filename, "w")
+            for word in filenames_with_keywords_dictionary[filename]:
+                cipher_text.write(encrypt_string_with_AES(word, key_AES_file_text).hex())
                 cipher_text.write(" ")
             cipher_text.close()
-        count = count + 1
+            ciphertext_files_containing_keyword_array.append(cipher_text_filename)
+        encrypted_unique_keyword = encrypt_string_with_PRF(keyword, key_PRF_file_text).hex()
+        encrypted_inverted_index_dictionary[encrypted_unique_keyword] = ciphertext_files_containing_keyword_array
+
+    print(encrypted_inverted_index_dictionary)
     
     # open both key and plain_text files
     key_text  = open(key_PRF_filepath, "r")
@@ -121,6 +140,18 @@ def encrypt_string_with_PRF(string_to_encrypt, key_text_to_encrypt_with):
         l = len(string_to_encrypt)
 
     aes = AES.new(key_text_to_encrypt_with.encode("utf-8"), AES.MODE_ECB)
+    encrypted_string = aes.encrypt(string_to_encrypt.encode("utf-8"))
+
+    return encrypted_string
+
+def encrypt_string_with_AES(string_to_encrypt, key_text_to_encrypt_with):
+    l = len(string_to_encrypt)
+
+    while(l%16 != 0):
+        string_to_encrypt = string_to_encrypt + "0"
+        l = len(string_to_encrypt)
+
+    aes = AES.new(key_text_to_encrypt_with.encode("utf-8"), AES.MODE_CBC)
     encrypted_string = aes.encrypt(string_to_encrypt.encode("utf-8"))
 
     return encrypted_string
