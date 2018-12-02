@@ -37,8 +37,8 @@ def main():
     # depending on the arguments we'll need to enc, dec or generate a keygen accordingly
     if input[1] == "enc":
         enc(input[2], input[3], input[4], input[5], input[6])
-    elif input[1] == "dec":
-        dec(input[2], input[3], input[4])
+    elif input[1] == "search":
+        search(input[2], input[3], input[4], input[5])
     elif input[1] == "keygen":
         keygen(input[2], input[3])
     elif input[1] == "token":
@@ -50,6 +50,29 @@ def generate_token(keyword, key_PRF_filepath, token_filepath):
     key_PRF_file_text = open(key_PRF_filepath, "r").read()
     token_file = open(token_filepath, "w")
     token_file.write(encrypt_string_with_PRF(keyword, key_PRF_file_text).hex())
+
+def search(index_filepath, token_filepath, ciphertextfiles_folderpath, key_AES_filepath):
+    token = open(token_filepath, "r").read()
+    aes_key = open(key_AES_filepath, "r").read()
+    index_text = open(index_filepath, "r").readlines()
+
+    ciphertextfiles_with_keyword = []
+    for line in index_text:
+        encrypted_keyword = line.split()[0]
+        if encrypted_keyword == token:
+            for word in line.split():
+                if word != token:
+                    ciphertextfiles_with_keyword.append(word)
+
+    print(ciphertextfiles_with_keyword)
+
+    for ciphertext_filename in ciphertextfiles_with_keyword:
+        text_to_print = ciphertext_filename
+        ciphertext = open(ciphertextfiles_folderpath + "/" + ciphertext_filename).read()
+        for word in ciphertext.split():
+            text_to_print = text_to_print + " " + decrypt_string_with_AES(word, aes_key)
+        print(text_to_print)
+                
 
 # Handles encoding of text plain_text given a key key and output file cipher_text
 def enc(key_PRF_filepath, key_AES_filepath, index_filepath, files_folderpath, ciphertextfiles_folderpath):
@@ -85,16 +108,6 @@ def enc(key_PRF_filepath, key_AES_filepath, index_filepath, files_folderpath, ci
     
     print(unencrypted_inverted_index_dictionary)
 
-    # count = 1
-    # for filename, keywords_array in filenames_with_keywords_dictionary.items():
-    #     if int(filename[1]) == count:
-    #         cipher_text = open(ciphertextfiles_folderpath + "/" + "c" + str(count) + ".txt", "w")
-    #         for keyword in keywords_array:
-    #             cipher_text.write(encrypt_string_with_PRF(keyword, key_PRF_file_text).hex())
-    #             cipher_text.write(" ")
-    #         cipher_text.close()
-    #     count = count + 1
-
     encrypted_inverted_index_dictionary = {}
     for keyword in unique_keyword_set:
         files_containing_keyword_array = unencrypted_inverted_index_dictionary[keyword]
@@ -118,18 +131,6 @@ def enc(key_PRF_filepath, key_AES_filepath, index_filepath, files_folderpath, ci
         index_text.write("\n")
 
     print(encrypted_inverted_index_dictionary)
-    
-    # open both key and plain_text files
-    key_text  = open(key_PRF_filepath, "r")
-
-    # create new aes encryption method using given key and iv
-    aes = AES.new(key_text.read().encode("utf8"), AES.MODE_CBC, iv)
-    # encrypt plain_text using newly created aes encryptor, note that plain_text must first be converted to bytes
-    cipher_text = aes.encrypt("hat".encode("utf8"))
-    # again, write to file after converting to hex
-    write_cipher_text_to_file(cipher_text_fp, cipher_text.hex())
-
-    print(cipher_text.hex())
 
 def get_keywords_from_file(keywords_filepath):
     keywords_array = []
@@ -152,33 +153,37 @@ def encrypt_string_with_PRF(string_to_encrypt, key_text_to_encrypt_with):
     return encrypted_string
 
 def encrypt_string_with_AES(string_to_encrypt, key_text_to_encrypt_with):
-    l = len(string_to_encrypt)
+    BLOCK_SIZE = 32
+    pad = lambda s: s + (BLOCK_SIZE - len(s) % BLOCK_SIZE) * \
+                    chr(BLOCK_SIZE - len(s) % BLOCK_SIZE)
+    unpad = lambda s: s[:-ord(s[len(s) - 1:])]
+    iv = Random.new().read(AES.block_size)
 
-    while(l%16 != 0):
-        string_to_encrypt = string_to_encrypt + "0"
-        l = len(string_to_encrypt)
+    aes = AES.new(key_text_to_encrypt_with.encode("utf-8"), AES.MODE_CBC, iv)
+    encrypted_string = aes.encrypt(pad(string_to_encrypt).encode("utf-8"))
 
-    aes = AES.new(key_text_to_encrypt_with.encode("utf-8"), AES.MODE_CBC)
-    encrypted_string = aes.encrypt(string_to_encrypt.encode("utf-8"))
+    aes = AES.new(key_text_to_encrypt_with.encode("utf-8"), AES.MODE_CBC, iv)
+    aes2 = AES.new(key_text_to_encrypt_with.encode("utf-8"), AES.MODE_CBC, iv)
+    encrypted_string = iv + aes.encrypt(pad(string_to_encrypt).encode("utf-8"))
+    print(key_text_to_encrypt_with)
+    print("HERE LIES THE STUFF: \n \n \n ")
+    print(encrypted_string)
+    text = unpad(aes2.decrypt(encrypted_string))
+    print(text)
+    return encrypted_string
 
     return encrypted_string
 
 # Handles decoding of text cipher_text given a key key and output file result_text
-def dec(key, cipher_text_fp, result_text):
-    # open both key and plain_text files
-    key_text  = open(key, "r").read()
-    cipher_text = open(cipher_text_fp, "r").read()
-    iv_text = open("data/iv.txt", "r").read()
+def decrypt_string_with_AES(string_to_decrypt, key_text_to_decrypt_with):
+    string_to_decrypt = bytes.fromhex(string_to_decrypt)
+    unpad = lambda s: s[:-ord(s[len(s) - 1:])]
 
-    # iv will be in hex, aes expects bytes so convert it back
-    iv_bytes = bytes.fromhex(iv_text)
-    
-    aes = AES.new(key_text.encode("utf8"), AES.MODE_CBC, iv_bytes)
-    # like the iv plain_text is in hex, needs to be in bytes
-    plain_text = aes.decrypt(bytes.fromhex(cipher_text))
-    write_decoded_text_to_file(result_text, plain_text.decode())
+    iv = string_to_decrypt[:AES.block_size]
+    aes = AES.new(key_text_to_decrypt_with.encode("utf-8"), AES.MODE_CBC, iv)
+    decrypted_string = unpad(aes.decrypt(string_to_decrypt[AES.block_size:])).decode("utf-8")
 
-    print(plain_text.decode())
+    return decrypted_string
 
 # generates a new key of length length and outputs it to file new_key_text
 def keygen(prf_key_file_name, aes_key_file_name):
