@@ -162,16 +162,6 @@ def encrypt_string_with_AES(string_to_encrypt, key_text_to_encrypt_with):
     aes = AES.new(key_text_to_encrypt_with.encode("utf-8"), AES.MODE_CBC, iv)
     encrypted_string = aes.encrypt(pad(string_to_encrypt).encode("utf-8"))
 
-    aes = AES.new(key_text_to_encrypt_with.encode("utf-8"), AES.MODE_CBC, iv)
-    aes2 = AES.new(key_text_to_encrypt_with.encode("utf-8"), AES.MODE_CBC, iv)
-    encrypted_string = iv + aes.encrypt(pad(string_to_encrypt).encode("utf-8"))
-    print(key_text_to_encrypt_with)
-    print("HERE LIES THE STUFF: \n \n \n ")
-    print(encrypted_string)
-    text = unpad(aes2.decrypt(encrypted_string))
-    print(text)
-    return encrypted_string
-
     return encrypted_string
 
 # Handles decoding of text cipher_text given a key key and output file result_text
